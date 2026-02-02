@@ -27,7 +27,7 @@ async def get_dashboard_statistics(db: AsyncSession = Depends(get_db)):
     total_batches = total_batches_result.scalar() or 0
 
     active_batches_result = await db.execute(
-        select(func.count(Batch.id)).where(Batch.is_closed == False)
+        select(func.count(Batch.id)).where(~Batch.is_closed)
     )
     active_batches = active_batches_result.scalar() or 0
 
@@ -35,7 +35,7 @@ async def get_dashboard_statistics(db: AsyncSession = Depends(get_db)):
     total_products = total_products_result.scalar() or 0
 
     aggregated_products_result = await db.execute(
-        select(func.count(Product.id)).where(Product.is_aggregated == True)
+        select(func.count(Product.id)).where(Product.is_aggregated)
     )
     aggregated_products = aggregated_products_result.scalar() or 0
 

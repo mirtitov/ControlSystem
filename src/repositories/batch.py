@@ -94,7 +94,7 @@ class BatchRepository:
     async def get_expired_batches(self) -> List[Batch]:
         """Get batches where shift_end < now() and is_closed = False"""
         query = select(Batch).where(
-            and_(Batch.is_closed == False, Batch.shift_end < datetime.utcnow())
+            and_(not Batch.is_closed, Batch.shift_end < datetime.utcnow())
         )
         result = await self.session.execute(query)
         return list(result.scalars().all())

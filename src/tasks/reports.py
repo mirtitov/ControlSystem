@@ -99,7 +99,7 @@ def generate_batch_report(
             # Cleanup temp file
             try:
                 os.remove(file_path)
-            except:
+            except Exception:
                 pass
 
             # Send email notification if provided

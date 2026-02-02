@@ -39,8 +39,10 @@ def import_batches_from_file(self: Task, file_url: str, user_id: int) -> dict:
                 # 1. MinIO URL: "http://minio:9000/bucket/object.xlsx"
                 # 2. Object path: "bucket/object.xlsx"
                 # 3. Just object name: "file.xlsx" (assumes imports bucket)
-
+                
                 # Try to parse as URL
+                from urllib.parse import urlparse
+                
                 parsed_url = urlparse(file_url)
 
                 if parsed_url.scheme in ["http", "https"]:

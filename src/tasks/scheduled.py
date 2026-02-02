@@ -80,7 +80,7 @@ def update_cached_statistics():
             total_batches = total_batches_result.scalar() or 0
 
             active_batches_result = await session.execute(
-                select(func.count(Batch.id)).where(Batch.is_closed == False)
+                select(func.count(Batch.id)).where(~Batch.is_closed)
             )
             active_batches = active_batches_result.scalar() or 0
 
@@ -90,7 +90,7 @@ def update_cached_statistics():
             total_products = total_products_result.scalar() or 0
 
             aggregated_products_result = await session.execute(
-                select(func.count(Product.id)).where(Product.is_aggregated == True)
+                select(func.count(Product.id)).where(Product.is_aggregated)
             )
             aggregated_products = aggregated_products_result.scalar() or 0
 

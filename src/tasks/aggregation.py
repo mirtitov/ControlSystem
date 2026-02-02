@@ -56,7 +56,7 @@ def aggregate_products_batch(
                 )
 
                 # Get aggregated product codes
-                aggregated_codes = [
+                [
                     code
                     for code in unique_codes
                     if code not in [e.get("code") for e in result.get("errors", [])]
