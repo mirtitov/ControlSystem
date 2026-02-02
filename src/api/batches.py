@@ -243,6 +243,7 @@ async def aggregate_batch(
     )
 
     # Get batch info for webhook
+    batch_repo = BatchRepository(db)
     batch = await batch_repo.get_by_id(batch_id)
 
     if subscriptions and result.get("aggregated", 0) > 0:
