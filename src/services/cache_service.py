@@ -3,7 +3,7 @@ import redis.asyncio as redis
 from typing import Optional, Any
 from src.config import settings
 from functools import wraps
-from datetime import datetime
+from datetime import datetime, date
 
 
 class CacheService:
@@ -44,7 +44,13 @@ class CacheService:
             await self.connect()
         
         if isinstance(value, (dict, list)):
-            value = json.dumps(value)
+            # Custom JSON encoder for dates and datetimes
+            def json_serializer(obj):
+                if isinstance(obj, (datetime, date)):
+                    return obj.isoformat()
+                raise TypeError(f"Type {type(obj)} not serializable")
+            
+            value = json.dumps(value, default=json_serializer)
         
         await self.redis_client.setex(key, ttl, value)
 

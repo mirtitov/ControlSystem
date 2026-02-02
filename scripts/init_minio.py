@@ -2,6 +2,10 @@
 Script to initialize MinIO buckets.
 Run this once to create required buckets.
 """
+import sys
+import os
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+
 from src.services.minio_service import minio_service
 
 if __name__ == "__main__":

@@ -17,7 +17,7 @@ celery[redis]==5.3.4
 flower==2.0.1
 
 # Redis
-redis==5.0.1
+redis==4.6.0
 hiredis==2.2.3
 
 # MinIO (S3-compatible storage)
