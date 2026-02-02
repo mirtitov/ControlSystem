@@ -126,7 +126,7 @@ def import_batches_from_file(self: Task, file_url: str, user_id: int) -> dict:
                 # Cleanup temp file
                 try:
                     os.remove(temp_file.name)
-                except:
+                except Exception:
                     pass
 
                 # Send webhook event
