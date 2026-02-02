@@ -67,7 +67,7 @@ class MinIOService:
 
             return url
         except S3Error as e:
-            raise Exception(f"Failed to upload file to MinIO: {e}")
+            raise Exception(f"Failed to upload file to MinIO: {e}") from e
 
     def upload_bytes(
         self,
@@ -113,7 +113,7 @@ class MinIOService:
 
             return url
         except S3Error as e:
-            raise Exception(f"Failed to upload bytes to MinIO: {e}")
+            raise Exception(f"Failed to upload bytes to MinIO: {e}") from e
 
     def download_file(self, bucket: str, object_name: str, file_path: str):
         """Download file from MinIO"""
@@ -122,7 +122,7 @@ class MinIOService:
                 bucket_name=bucket, object_name=object_name, file_path=file_path
             )
         except S3Error as e:
-            raise Exception(f"Failed to download file from MinIO: {e}")
+            raise Exception(f"Failed to download file from MinIO: {e}") from e
 
     def download_bytes(self, bucket: str, object_name: str) -> bytes:
         """Download file as bytes from MinIO"""
@@ -133,14 +133,14 @@ class MinIOService:
             response.release_conn()
             return data
         except S3Error as e:
-            raise Exception(f"Failed to download bytes from MinIO: {e}")
+            raise Exception(f"Failed to download bytes from MinIO: {e}") from e
 
     def delete_file(self, bucket: str, object_name: str):
         """Delete file from MinIO"""
         try:
             self.client.remove_object(bucket, object_name)
         except S3Error as e:
-            raise Exception(f"Failed to delete file from MinIO: {e}")
+            raise Exception(f"Failed to delete file from MinIO: {e}") from e
 
     def list_files(self, bucket: str, prefix: str | None = None):
         """List files in bucket"""
@@ -148,7 +148,7 @@ class MinIOService:
             objects = self.client.list_objects(bucket_name=bucket, prefix=prefix, recursive=True)
             return list(objects)
         except S3Error as e:
-            raise Exception(f"Failed to list files from MinIO: {e}")
+            raise Exception(f"Failed to list files from MinIO: {e}") from e
 
     def _get_content_type(self, file_path: str) -> str:
         """Determine Content-Type from file path"""
@@ -174,7 +174,7 @@ class MinIOService:
             stat = self.client.stat_object(bucket, object_name)
             return stat.size
         except S3Error as e:
-            raise Exception(f"Failed to get file size from MinIO: {e}")
+            raise Exception(f"Failed to get file size from MinIO: {e}") from e
 
 
 # Singleton instance
