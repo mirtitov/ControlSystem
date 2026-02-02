@@ -1,6 +1,7 @@
 """
 Тесты для моделей SQLAlchemy
 """
+
 import sys
 import os
 from datetime import datetime, date
@@ -15,15 +16,12 @@ from src.models.webhook import WebhookSubscription, WebhookDelivery
 
 def test_work_center_model():
     """Тест модели WorkCenter"""
-    work_center = WorkCenter(
-        identifier="RC-001",
-        name="Цех №1"
-    )
-    
+    work_center = WorkCenter(identifier="RC-001", name="Цех №1")
+
     assert work_center.identifier == "RC-001"
     assert work_center.name == "Цех №1"
-    assert hasattr(work_center, 'id')
-    assert hasattr(work_center, 'created_at')
+    assert hasattr(work_center, "id")
+    assert hasattr(work_center, "created_at")
     print("✅ WorkCenter model structure is correct")
 
 
@@ -40,24 +38,20 @@ def test_batch_model():
         nomenclature="Болт М10",
         ekn_code="EKN-123",
         shift_start=datetime(2024, 1, 30, 8, 0, 0),
-        shift_end=datetime(2024, 1, 30, 20, 0, 0)
+        shift_end=datetime(2024, 1, 30, 20, 0, 0),
     )
-    
+
     assert batch.batch_number == 12345
     assert batch.is_closed == False
     assert batch.closed_at is None
-    assert hasattr(batch, 'products')
+    assert hasattr(batch, "products")
     print("✅ Batch model structure is correct")
 
 
 def test_product_model():
     """Тест модели Product"""
-    product = Product(
-        unique_code="TEST-CODE-123",
-        batch_id=1,
-        is_aggregated=False
-    )
-    
+    product = Product(unique_code="TEST-CODE-123", batch_id=1, is_aggregated=False)
+
     assert product.unique_code == "TEST-CODE-123"
     assert product.batch_id == 1
     assert product.is_aggregated == False
@@ -73,9 +67,9 @@ def test_webhook_subscription_model():
         secret_key="secret123",
         is_active=True,
         retry_count=3,
-        timeout=10
+        timeout=10,
     )
-    
+
     assert subscription.url == "https://example.com/webhook"
     assert len(subscription.events) == 1
     assert subscription.is_active == True
@@ -89,9 +83,9 @@ def test_webhook_delivery_model():
         event_type="batch_created",
         payload={"test": "data"},
         status="pending",
-        attempts=0
+        attempts=0,
     )
-    
+
     assert delivery.event_type == "batch_created"
     assert delivery.status == "pending"
     assert delivery.attempts == 0
@@ -102,19 +96,20 @@ if __name__ == "__main__":
     print("=" * 50)
     print("Running model structure tests...")
     print("=" * 50)
-    
+
     try:
         test_work_center_model()
         test_batch_model()
         test_product_model()
         test_webhook_subscription_model()
         test_webhook_delivery_model()
-        
+
         print("=" * 50)
         print("✅ All model tests passed!")
         print("=" * 50)
     except Exception as e:
         print(f"❌ Test failed: {e}")
         import traceback
+
         traceback.print_exc()
         sys.exit(1)

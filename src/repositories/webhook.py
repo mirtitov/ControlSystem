@@ -9,20 +9,26 @@ class WebhookRepository:
     def __init__(self, session: AsyncSession):
         self.session = session
 
-    async def create_subscription(self, data: WebhookSubscriptionCreate) -> WebhookSubscription:
+    async def create_subscription(
+        self, data: WebhookSubscriptionCreate
+    ) -> WebhookSubscription:
         subscription = WebhookSubscription(**data.model_dump())
         self.session.add(subscription)
         await self.session.flush()
         await self.session.refresh(subscription)
         return subscription
 
-    async def get_subscription(self, subscription_id: int) -> WebhookSubscription | None:
+    async def get_subscription(
+        self, subscription_id: int
+    ) -> WebhookSubscription | None:
         result = await self.session.execute(
             select(WebhookSubscription).where(WebhookSubscription.id == subscription_id)
         )
         return result.scalar_one_or_none()
 
-    async def list_subscriptions(self, is_active: Optional[bool] = None) -> List[WebhookSubscription]:
+    async def list_subscriptions(
+        self, is_active: Optional[bool] = None
+    ) -> List[WebhookSubscription]:
         query = select(WebhookSubscription)
         if is_active is not None:
             query = query.where(WebhookSubscription.is_active == is_active)
@@ -35,11 +41,11 @@ class WebhookRepository:
         subscription = await self.get_subscription(subscription_id)
         if not subscription:
             return None
-        
+
         update_data = data.model_dump(exclude_unset=True)
         for key, value in update_data.items():
             setattr(subscription, key, value)
-        
+
         await self.session.flush()
         await self.session.refresh(subscription)
         return subscription
@@ -48,18 +54,20 @@ class WebhookRepository:
         subscription = await self.get_subscription(subscription_id)
         if not subscription:
             return False
-        
+
         await self.session.delete(subscription)
         await self.session.flush()
         return True
 
-    async def get_active_subscriptions_for_event(self, event_type: str) -> List[WebhookSubscription]:
+    async def get_active_subscriptions_for_event(
+        self, event_type: str
+    ) -> List[WebhookSubscription]:
         """Get all active subscriptions that listen to a specific event"""
         result = await self.session.execute(
             select(WebhookSubscription).where(
                 and_(
                     WebhookSubscription.is_active == True,
-                    WebhookSubscription.events.contains([event_type])
+                    WebhookSubscription.events.contains([event_type]),
                 )
             )
         )
@@ -70,13 +78,13 @@ class WebhookRepository:
         subscription_id: int,
         event_type: str,
         payload: dict,
-        status: str = "pending"
+        status: str = "pending",
     ) -> WebhookDelivery:
         delivery = WebhookDelivery(
             subscription_id=subscription_id,
             event_type=event_type,
             payload=payload,
-            status=status
+            status=status,
         )
         self.session.add(delivery)
         await self.session.flush()
@@ -86,12 +94,11 @@ class WebhookRepository:
     async def get_failed_deliveries(self, limit: int = 100) -> List[WebhookDelivery]:
         """Get failed deliveries for retry"""
         result = await self.session.execute(
-            select(WebhookDelivery).where(
-                and_(
-                    WebhookDelivery.status == "failed",
-                    WebhookDelivery.attempts < 3
-                )
-            ).limit(limit)
+            select(WebhookDelivery)
+            .where(
+                and_(WebhookDelivery.status == "failed", WebhookDelivery.attempts < 3)
+            )
+            .limit(limit)
         )
         return list(result.scalars().all())
 
@@ -101,12 +108,12 @@ class WebhookRepository:
         status: str,
         response_status: Optional[int] = None,
         response_body: Optional[str] = None,
-        error_message: Optional[str] = None
+        error_message: Optional[str] = None,
     ) -> WebhookDelivery | None:
         delivery = await self.session.get(WebhookDelivery, delivery_id)
         if not delivery:
             return None
-        
+
         delivery.status = status
         delivery.attempts += 1
         if response_status:
@@ -115,11 +122,12 @@ class WebhookRepository:
             delivery.response_body = response_body
         if error_message:
             delivery.error_message = error_message
-        
+
         if status == "success":
             from datetime import datetime
+
             delivery.delivered_at = datetime.utcnow()
-        
+
         await self.session.flush()
         await self.session.refresh(delivery)
         return delivery

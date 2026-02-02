@@ -14,9 +14,7 @@ class CacheService:
         """Connect to Redis"""
         if self.redis_client is None:
             self.redis_client = await redis.from_url(
-                settings.redis_url,
-                encoding="utf-8",
-                decode_responses=True
+                settings.redis_url, encoding="utf-8", decode_responses=True
             )
 
     async def disconnect(self):
@@ -29,7 +27,7 @@ class CacheService:
         """Get value from cache"""
         if not self.redis_client:
             await self.connect()
-        
+
         value = await self.redis_client.get(key)
         if value:
             try:
@@ -42,34 +40,34 @@ class CacheService:
         """Set value in cache with TTL (seconds)"""
         if not self.redis_client:
             await self.connect()
-        
+
         if isinstance(value, (dict, list)):
             # Custom JSON encoder for dates and datetimes
             def json_serializer(obj):
                 if isinstance(obj, (datetime, date)):
                     return obj.isoformat()
                 raise TypeError(f"Type {type(obj)} not serializable")
-            
+
             value = json.dumps(value, default=json_serializer)
-        
+
         await self.redis_client.setex(key, ttl, value)
 
     async def delete(self, key: str):
         """Delete key from cache"""
         if not self.redis_client:
             await self.connect()
-        
+
         await self.redis_client.delete(key)
 
     async def delete_pattern(self, pattern: str):
         """Delete all keys matching pattern"""
         if not self.redis_client:
             await self.connect()
-        
+
         keys = []
         async for key in self.redis_client.scan_iter(match=pattern):
             keys.append(key)
-        
+
         if keys:
             await self.redis_client.delete(*keys)
 
@@ -77,7 +75,7 @@ class CacheService:
         """Check if key exists"""
         if not self.redis_client:
             await self.connect()
-        
+
         return await self.redis_client.exists(key) > 0
 
 
@@ -88,12 +86,13 @@ cache_service = CacheService()
 def cached(ttl: int = 300, key_prefix: str = ""):
     """
     Decorator for caching function results.
-    
+
     Usage:
         @cached(ttl=300, key_prefix="dashboard_stats")
         async def get_dashboard_stats():
             ...
     """
+
     def decorator(func):
         @wraps(func)
         async def wrapper(*args, **kwargs):
@@ -102,20 +101,23 @@ def cached(ttl: int = 300, key_prefix: str = ""):
             if args:
                 cache_key += f":{':'.join(str(arg) for arg in args)}"
             if kwargs:
-                cache_key += f":{':'.join(f'{k}={v}' for k, v in sorted(kwargs.items()))}"
-            
+                cache_key += (
+                    f":{':'.join(f'{k}={v}' for k, v in sorted(kwargs.items()))}"
+                )
+
             # Try to get from cache
             cached_value = await cache_service.get(cache_key)
             if cached_value is not None:
                 return cached_value
-            
+
             # Execute function
             result = await func(*args, **kwargs)
-            
+
             # Store in cache
             await cache_service.set(cache_key, result, ttl=ttl)
-            
+
             return result
-        
+
         return wrapper
+
     return decorator

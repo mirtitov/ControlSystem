@@ -1,7 +1,6 @@
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
 from src.models.work_center import WorkCenter
-from src.schemas.work_center import WorkCenterCreate
 
 
 class WorkCenterRepository:
@@ -18,7 +17,7 @@ class WorkCenterRepository:
         work_center = await self.get_by_identifier(identifier)
         if work_center:
             return work_center
-        
+
         work_center = WorkCenter(identifier=identifier, name=name)
         self.session.add(work_center)
         await self.session.flush()

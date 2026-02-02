@@ -1,6 +1,5 @@
 from pydantic import BaseModel
 from typing import Optional, Dict, Any
-from datetime import date
 
 
 class ExportRequest(BaseModel):

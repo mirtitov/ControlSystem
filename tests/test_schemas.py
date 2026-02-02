@@ -1,15 +1,15 @@
 """
 Тесты для Pydantic схем
 """
+
 import sys
 import os
 from datetime import datetime, date
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from src.schemas.batch import BatchCreate, BatchUpdate, BatchCreateRequest
+from src.schemas.batch import BatchCreate, BatchCreateRequest
 from src.schemas.product import ProductCreate
-from src.schemas.work_center import WorkCenterCreate
 from src.schemas.webhook import WebhookSubscriptionCreate
 
 
@@ -27,9 +27,9 @@ def test_batch_create_request():
         "КодЕКН": "EKN-123",
         "ИдентификаторРЦ": "RC-001",
         "ДатаВремяНачалаСмены": "2024-01-30T08:00:00",
-        "ДатаВремяОкончанияСмены": "2024-01-30T20:00:00"
+        "ДатаВремяОкончанияСмены": "2024-01-30T20:00:00",
     }
-    
+
     request = BatchCreateRequest(**data)
     assert request.СтатусЗакрытия == False
     assert request.НомерПартии == 12345
@@ -50,9 +50,9 @@ def test_batch_create():
         "nomenclature": "Болт М10",
         "ekn_code": "EKN-123",
         "shift_start": datetime(2024, 1, 30, 8, 0, 0),
-        "shift_end": datetime(2024, 1, 30, 20, 0, 0)
+        "shift_end": datetime(2024, 1, 30, 20, 0, 0),
     }
-    
+
     batch = BatchCreate(**data)
     assert batch.batch_number == 12345
     assert batch.is_closed == False
@@ -61,11 +61,8 @@ def test_batch_create():
 
 def test_product_create():
     """Тест создания ProductCreate"""
-    data = {
-        "unique_code": "TEST-CODE-123",
-        "batch_id": 1
-    }
-    
+    data = {"unique_code": "TEST-CODE-123", "batch_id": 1}
+
     product = ProductCreate(**data)
     assert product.unique_code == "TEST-CODE-123"
     assert product.batch_id == 1
@@ -79,9 +76,9 @@ def test_webhook_subscription_create():
         "events": ["batch_created", "batch_closed"],
         "secret_key": "secret123",
         "retry_count": 3,
-        "timeout": 10
+        "timeout": 10,
     }
-    
+
     subscription = WebhookSubscriptionCreate(**data)
     assert subscription.url == "https://example.com/webhook"
     assert len(subscription.events) == 2
@@ -92,18 +89,19 @@ if __name__ == "__main__":
     print("=" * 50)
     print("Running schema validation tests...")
     print("=" * 50)
-    
+
     try:
         test_batch_create_request()
         test_batch_create()
         test_product_create()
         test_webhook_subscription_create()
-        
+
         print("=" * 50)
         print("✅ All schema tests passed!")
         print("=" * 50)
     except Exception as e:
         print(f"❌ Test failed: {e}")
         import traceback
+
         traceback.print_exc()
         sys.exit(1)

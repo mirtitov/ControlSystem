@@ -1,6 +1,7 @@
 """
 Тесты для проверки импортов всех модулей
 """
+
 import sys
 import os
 
@@ -11,14 +12,22 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 def test_config_import():
     """Тест импорта конфигурации"""
     from src.config import settings
+
     assert settings is not None
-    assert hasattr(settings, 'database_url')
+    assert hasattr(settings, "database_url")
     print("✅ Config imported successfully")
 
 
 def test_models_import():
     """Тест импорта моделей"""
-    from src.models import WorkCenter, Batch, Product, WebhookSubscription, WebhookDelivery
+    from src.models import (
+        WorkCenter,
+        Batch,
+        Product,
+        WebhookSubscription,
+        WebhookDelivery,
+    )
+
     assert WorkCenter is not None
     assert Batch is not None
     assert Product is not None
@@ -29,12 +38,8 @@ def test_models_import():
 
 def test_schemas_import():
     """Тест импорта схем"""
-    from src.schemas import (
-        BatchCreate, BatchUpdate, BatchResponse,
-        ProductCreate, ProductResponse,
-        WorkCenterCreate, WorkCenterResponse,
-        WebhookSubscriptionCreate, WebhookSubscriptionResponse
-    )
+    from src.schemas import BatchCreate, BatchResponse
+
     assert BatchCreate is not None
     assert BatchResponse is not None
     print("✅ All schemas imported successfully")
@@ -46,8 +51,9 @@ def test_repositories_import():
         WorkCenterRepository,
         BatchRepository,
         ProductRepository,
-        WebhookRepository
+        WebhookRepository,
     )
+
     assert WorkCenterRepository is not None
     assert BatchRepository is not None
     assert ProductRepository is not None
@@ -59,6 +65,7 @@ def test_services_import():
     """Тест импорта сервисов"""
     try:
         from src.services import MinIOService, CacheService, WebhookService
+
         assert MinIOService is not None
         assert CacheService is not None
         assert WebhookService is not None
@@ -71,6 +78,7 @@ def test_api_import():
     """Тест импорта API"""
     try:
         from src.api import batches, products, tasks, webhooks, analytics
+
         assert batches is not None
         assert products is not None
         assert tasks is not None
@@ -81,7 +89,6 @@ def test_api_import():
         print(f"⚠️  API modules require external dependencies: {e}")
         # Попробуем импортировать без зависимостей
         try:
-            import src.api.batches
             print("✅ API modules structure is correct (some dependencies missing)")
         except Exception as e2:
             print(f"⚠️  Could not import API modules: {e2}")
@@ -89,7 +96,8 @@ def test_api_import():
 
 def test_database_import():
     """Тест импорта базы данных"""
-    from src.database import Base, engine, AsyncSessionLocal, get_db
+    from src.database import Base, engine
+
     assert Base is not None
     assert engine is not None
     print("✅ Database modules imported successfully")
@@ -99,7 +107,7 @@ if __name__ == "__main__":
     print("=" * 50)
     print("Running import tests...")
     print("=" * 50)
-    
+
     try:
         test_config_import()
         test_models_import()
@@ -108,12 +116,13 @@ if __name__ == "__main__":
         test_services_import()
         test_api_import()
         test_database_import()
-        
+
         print("=" * 50)
         print("✅ All import tests passed!")
         print("=" * 50)
     except Exception as e:
         print(f"❌ Test failed: {e}")
         import traceback
+
         traceback.print_exc()
         sys.exit(1)

@@ -1,5 +1,5 @@
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select, func, and_, or_
+from sqlalchemy import select, func, and_
 from sqlalchemy.orm import selectinload
 from typing import Optional, List
 from datetime import date, datetime
@@ -18,7 +18,9 @@ class BatchRepository:
         await self.session.refresh(batch)
         return batch
 
-    async def get_by_id(self, batch_id: int, with_products: bool = False) -> Batch | None:
+    async def get_by_id(
+        self, batch_id: int, with_products: bool = False
+    ) -> Batch | None:
         query = select(Batch).where(Batch.id == batch_id)
         if with_products:
             query = query.options(selectinload(Batch.products))
@@ -29,19 +31,19 @@ class BatchRepository:
         batch = await self.get_by_id(batch_id)
         if not batch:
             return None
-        
+
         update_data = data.model_dump(exclude_unset=True)
-        
+
         # Handle is_closed logic
         if "is_closed" in update_data:
             if update_data["is_closed"] and not batch.is_closed:
                 batch.closed_at = datetime.utcnow()
             elif not update_data["is_closed"] and batch.is_closed:
                 batch.closed_at = None
-        
+
         for key, value in update_data.items():
             setattr(batch, key, value)
-        
+
         await self.session.flush()
         await self.session.refresh(batch)
         return batch
@@ -58,9 +60,9 @@ class BatchRepository:
     ) -> tuple[List[Batch], int]:
         query = select(Batch)
         count_query = select(func.count(Batch.id))
-        
+
         conditions = []
-        
+
         if is_closed is not None:
             conditions.append(Batch.is_closed == is_closed)
         if batch_number is not None:
@@ -71,31 +73,28 @@ class BatchRepository:
             conditions.append(Batch.work_center_id == work_center_id)
         if shift is not None:
             conditions.append(Batch.shift == shift)
-        
+
         if conditions:
             query = query.where(and_(*conditions))
             count_query = count_query.where(and_(*conditions))
-        
+
         # Get total count
         total_result = await self.session.execute(count_query)
         total = total_result.scalar()
-        
+
         # Get items with pagination
         query = query.options(selectinload(Batch.products))
         query = query.offset(offset).limit(limit).order_by(Batch.created_at.desc())
-        
+
         result = await self.session.execute(query)
         items = result.scalars().all()
-        
+
         return list(items), total
 
     async def get_expired_batches(self) -> List[Batch]:
         """Get batches where shift_end < now() and is_closed = False"""
         query = select(Batch).where(
-            and_(
-                Batch.is_closed == False,
-                Batch.shift_end < datetime.utcnow()
-            )
+            and_(Batch.is_closed == False, Batch.shift_end < datetime.utcnow())
         )
         result = await self.session.execute(query)
         return list(result.scalars().all())
