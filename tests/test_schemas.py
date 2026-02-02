@@ -31,7 +31,7 @@ def test_batch_create_request():
     }
 
     request = BatchCreateRequest(**data)
-    assert request.СтатусЗакрытия == False
+    assert not request.СтатусЗакрытия
     assert request.НомерПартии == 12345
     assert request.ДатаПартии == date(2024, 1, 30)
     print("✅ BatchCreateRequest validation works")
@@ -55,7 +55,7 @@ def test_batch_create():
 
     batch = BatchCreate(**data)
     assert batch.batch_number == 12345
-    assert batch.is_closed == False
+    assert not batch.is_closed
     print("✅ BatchCreate validation works")
 
 

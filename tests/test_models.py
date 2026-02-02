@@ -42,7 +42,7 @@ def test_batch_model():
     )
 
     assert batch.batch_number == 12345
-    assert batch.is_closed == False
+    assert not batch.is_closed
     assert batch.closed_at is None
     assert hasattr(batch, "products")
     print("✅ Batch model structure is correct")
@@ -54,7 +54,7 @@ def test_product_model():
 
     assert product.unique_code == "TEST-CODE-123"
     assert product.batch_id == 1
-    assert product.is_aggregated == False
+    assert not product.is_aggregated
     assert product.aggregated_at is None
     print("✅ Product model structure is correct")
 
@@ -72,7 +72,7 @@ def test_webhook_subscription_model():
 
     assert subscription.url == "https://example.com/webhook"
     assert len(subscription.events) == 1
-    assert subscription.is_active == True
+    assert subscription.is_active
     print("✅ WebhookSubscription model structure is correct")
 
 
