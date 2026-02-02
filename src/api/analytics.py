@@ -1,11 +1,12 @@
+from datetime import datetime, timedelta
+
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.ext.asyncio import AsyncSession
-from typing import List
+
 from src.database import get_db
 from src.repositories.batch import BatchRepository
 from src.repositories.product import ProductRepository
 from src.services.cache_service import cache_service
-from datetime import datetime, timedelta
 
 router = APIRouter(prefix="/api/v1/analytics", tags=["analytics"])
 
@@ -19,16 +20,15 @@ async def get_dashboard_statistics(db: AsyncSession = Depends(get_db)):
         return cached
 
     # If not cached, calculate (should be updated by Celery Beat)
-    from sqlalchemy import select, func
+    from sqlalchemy import func, select
+
     from src.models.batch import Batch
     from src.models.product import Product
 
     total_batches_result = await db.execute(select(func.count(Batch.id)))
     total_batches = total_batches_result.scalar() or 0
 
-    active_batches_result = await db.execute(
-        select(func.count(Batch.id)).where(~Batch.is_closed)
-    )
+    active_batches_result = await db.execute(select(func.count(Batch.id)).where(~Batch.is_closed))
     active_batches = active_batches_result.scalar() or 0
 
     total_products_result = await db.execute(select(func.count(Product.id)))
@@ -80,19 +80,11 @@ async def get_batch_statistics(batch_id: int, db: AsyncSession = Depends(get_db)
     # Calculate timeline
     now = datetime.utcnow()
     shift_duration = (batch.shift_end - batch.shift_start).total_seconds() / 3600
-    elapsed = (
-        (now - batch.shift_start).total_seconds() / 3600
-        if now > batch.shift_start
-        else 0
-    )
+    elapsed = (now - batch.shift_start).total_seconds() / 3600 if now > batch.shift_start else 0
 
     products_per_hour = stats["aggregated"] / elapsed if elapsed > 0 else 0
-    remaining_hours = (
-        stats["remaining"] / products_per_hour if products_per_hour > 0 else 0
-    )
-    estimated_completion = (
-        now + timedelta(hours=remaining_hours) if remaining_hours > 0 else None
-    )
+    remaining_hours = stats["remaining"] / products_per_hour if products_per_hour > 0 else 0
+    estimated_completion = now + timedelta(hours=remaining_hours) if remaining_hours > 0 else None
 
     result = {
         "batch_info": {
@@ -124,7 +116,7 @@ async def get_batch_statistics(batch_id: int, db: AsyncSession = Depends(get_db)
 
 
 @router.post("/compare-batches")
-async def compare_batches(batch_ids: List[int], db: AsyncSession = Depends(get_db)):
+async def compare_batches(batch_ids: list[int], db: AsyncSession = Depends(get_db)):
     """Сравнение партий"""
     batch_repo = BatchRepository(db)
     product_repo = ProductRepository(db)
@@ -158,9 +150,7 @@ async def compare_batches(batch_ids: List[int], db: AsyncSession = Depends(get_d
 
     # Calculate averages
     avg_rate = sum(c["rate"] for c in comparison) / len(comparison)
-    avg_products_per_hour = sum(c["products_per_hour"] for c in comparison) / len(
-        comparison
-    )
+    avg_products_per_hour = sum(c["products_per_hour"] for c in comparison) / len(comparison)
 
     return {
         "comparison": comparison,

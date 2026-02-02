@@ -1,7 +1,7 @@
+from sqlalchemy import and_, select
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select, and_
-from typing import List, Optional
-from src.models.webhook import WebhookSubscription, WebhookDelivery
+
+from src.models.webhook import WebhookDelivery, WebhookSubscription
 from src.schemas.webhook import WebhookSubscriptionCreate, WebhookSubscriptionUpdate
 
 
@@ -9,26 +9,20 @@ class WebhookRepository:
     def __init__(self, session: AsyncSession):
         self.session = session
 
-    async def create_subscription(
-        self, data: WebhookSubscriptionCreate
-    ) -> WebhookSubscription:
+    async def create_subscription(self, data: WebhookSubscriptionCreate) -> WebhookSubscription:
         subscription = WebhookSubscription(**data.model_dump())
         self.session.add(subscription)
         await self.session.flush()
         await self.session.refresh(subscription)
         return subscription
 
-    async def get_subscription(
-        self, subscription_id: int
-    ) -> WebhookSubscription | None:
+    async def get_subscription(self, subscription_id: int) -> WebhookSubscription | None:
         result = await self.session.execute(
             select(WebhookSubscription).where(WebhookSubscription.id == subscription_id)
         )
         return result.scalar_one_or_none()
 
-    async def list_subscriptions(
-        self, is_active: Optional[bool] = None
-    ) -> List[WebhookSubscription]:
+    async def list_subscriptions(self, is_active: bool | None = None) -> list[WebhookSubscription]:
         query = select(WebhookSubscription)
         if is_active is not None:
             query = query.where(WebhookSubscription.is_active == is_active)
@@ -61,7 +55,7 @@ class WebhookRepository:
 
     async def get_active_subscriptions_for_event(
         self, event_type: str
-    ) -> List[WebhookSubscription]:
+    ) -> list[WebhookSubscription]:
         """Get all active subscriptions that listen to a specific event"""
         result = await self.session.execute(
             select(WebhookSubscription).where(
@@ -91,13 +85,11 @@ class WebhookRepository:
         await self.session.refresh(delivery)
         return delivery
 
-    async def get_failed_deliveries(self, limit: int = 100) -> List[WebhookDelivery]:
+    async def get_failed_deliveries(self, limit: int = 100) -> list[WebhookDelivery]:
         """Get failed deliveries for retry"""
         result = await self.session.execute(
             select(WebhookDelivery)
-            .where(
-                and_(WebhookDelivery.status == "failed", WebhookDelivery.attempts < 3)
-            )
+            .where(and_(WebhookDelivery.status == "failed", WebhookDelivery.attempts < 3))
             .limit(limit)
         )
         return list(result.scalars().all())
@@ -106,9 +98,9 @@ class WebhookRepository:
         self,
         delivery_id: int,
         status: str,
-        response_status: Optional[int] = None,
-        response_body: Optional[str] = None,
-        error_message: Optional[str] = None,
+        response_status: int | None = None,
+        response_body: str | None = None,
+        error_message: str | None = None,
     ) -> WebhookDelivery | None:
         delivery = await self.session.get(WebhookDelivery, delivery_id)
         if not delivery:
@@ -134,7 +126,7 @@ class WebhookRepository:
 
     async def get_deliveries_by_subscription(
         self, subscription_id: int, limit: int = 100
-    ) -> List[WebhookDelivery]:
+    ) -> list[WebhookDelivery]:
         result = await self.session.execute(
             select(WebhookDelivery)
             .where(WebhookDelivery.subscription_id == subscription_id)

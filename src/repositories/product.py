@@ -1,6 +1,6 @@
+from sqlalchemy import and_, func, select
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select, func, and_
-from typing import List
+
 from src.models.product import Product
 from src.schemas.product import ProductCreate
 
@@ -22,10 +22,8 @@ class ProductRepository:
         )
         return result.scalar_one_or_none()
 
-    async def get_by_batch_id(self, batch_id: int) -> List[Product]:
-        result = await self.session.execute(
-            select(Product).where(Product.batch_id == batch_id)
-        )
+    async def get_by_batch_id(self, batch_id: int) -> list[Product]:
+        result = await self.session.execute(select(Product).where(Product.batch_id == batch_id))
         return list(result.scalars().all())
 
     async def aggregate(self, batch_id: int, unique_code: str) -> Product | None:
@@ -51,15 +49,13 @@ class ProductRepository:
         await self.session.refresh(product)
         return product
 
-    async def bulk_aggregate(self, batch_id: int, unique_codes: List[str]) -> dict:
+    async def bulk_aggregate(self, batch_id: int, unique_codes: list[str]) -> dict:
         """Bulk aggregate products. Returns success/failed counts."""
         from datetime import datetime
 
         result = await self.session.execute(
             select(Product).where(
-                and_(
-                    Product.batch_id == batch_id, Product.unique_code.in_(unique_codes)
-                )
+                and_(Product.batch_id == batch_id, Product.unique_code.in_(unique_codes))
             )
         )
         products = result.scalars().all()
@@ -71,9 +67,7 @@ class ProductRepository:
         for product in products:
             if product.is_aggregated:
                 failed += 1
-                errors.append(
-                    {"code": product.unique_code, "reason": "already aggregated"}
-                )
+                errors.append({"code": product.unique_code, "reason": "already aggregated"})
             else:
                 product.is_aggregated = True
                 product.aggregated_at = datetime.utcnow()
@@ -101,9 +95,7 @@ class ProductRepository:
         result = await self.session.execute(
             select(
                 func.count(Product.id).label("total"),
-                func.sum(func.cast(Product.is_aggregated, func.Integer)).label(
-                    "aggregated"
-                ),
+                func.sum(func.cast(Product.is_aggregated, func.Integer)).label("aggregated"),
             ).where(Product.batch_id == batch_id)
         )
         stats = result.first()

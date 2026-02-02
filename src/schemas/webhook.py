@@ -1,27 +1,28 @@
-from pydantic import BaseModel
-from typing import List, Optional, Dict, Any
 from datetime import datetime
+from typing import Any
+
+from pydantic import BaseModel
 
 
 class WebhookSubscriptionCreate(BaseModel):
     url: str
-    events: List[str]
+    events: list[str]
     secret_key: str
     retry_count: int = 3
     timeout: int = 10
 
 
 class WebhookSubscriptionUpdate(BaseModel):
-    is_active: Optional[bool] = None
-    events: Optional[List[str]] = None
-    retry_count: Optional[int] = None
-    timeout: Optional[int] = None
+    is_active: bool | None = None
+    events: list[str] | None = None
+    retry_count: int | None = None
+    timeout: int | None = None
 
 
 class WebhookSubscriptionResponse(BaseModel):
     id: int
     url: str
-    events: List[str]
+    events: list[str]
     is_active: bool
     retry_count: int
     timeout: int
@@ -36,14 +37,14 @@ class WebhookDeliveryResponse(BaseModel):
     id: int
     subscription_id: int
     event_type: str
-    payload: Dict[str, Any]
+    payload: dict[str, Any]
     status: str
     attempts: int
-    response_status: Optional[int] = None
-    response_body: Optional[str] = None
-    error_message: Optional[str] = None
+    response_status: int | None = None
+    response_body: str | None = None
+    error_message: str | None = None
     created_at: datetime
-    delivered_at: Optional[datetime] = None
+    delivered_at: datetime | None = None
 
     class Config:
         from_attributes = True

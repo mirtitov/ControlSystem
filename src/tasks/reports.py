@@ -1,18 +1,19 @@
-from celery import Task
-from typing import Optional
+import os
+import tempfile
 from datetime import datetime, timedelta
+
+from celery import Task
+
 from src.celery_app import celery_app
 from src.database import AsyncSessionLocal
 from src.repositories.batch import BatchRepository
 from src.repositories.product import ProductRepository
 from src.services.minio_service import minio_service
-import tempfile
-import os
 
 
 @celery_app.task(bind=True, max_retries=3)
 def generate_batch_report(
-    self: Task, batch_id: int, format: str = "excel", user_email: Optional[str] = None
+    self: Task, batch_id: int, format: str = "excel", user_email: str | None = None
 ) -> dict:
     """
     Генерация детального отчета по партии.
@@ -55,7 +56,9 @@ def generate_batch_report(
                 return {"success": False, "error": f"Unsupported format: {format}"}
 
             # Upload to MinIO
-            file_name = f"batch_{batch_id}_report_{datetime.utcnow().strftime('%Y%m%d_%H%M%S')}.{format}"
+            file_name = (
+                f"batch_{batch_id}_report_{datetime.utcnow().strftime('%Y%m%d_%H%M%S')}.{format}"
+            )
             file_url = minio_service.upload_file(
                 bucket="reports",
                 file_path=file_path,
@@ -68,8 +71,8 @@ def generate_batch_report(
             expires_at = (datetime.utcnow() + timedelta(days=7)).isoformat() + "Z"
 
             # Send webhook event
-            from src.services.webhook_service import webhook_service
             from src.repositories.webhook import WebhookRepository
+            from src.services.webhook_service import webhook_service
             from src.tasks.webhooks import send_webhook_delivery
 
             webhook_repo = WebhookRepository(session)
@@ -189,16 +192,16 @@ def _generate_excel_report(batch, stats) -> str:
 
 def _generate_pdf_report(batch, stats) -> str:
     """Generate PDF report"""
+    from reportlab.lib import colors
     from reportlab.lib.pagesizes import A4
     from reportlab.lib.styles import getSampleStyleSheet
     from reportlab.platypus import (
-        SimpleDocTemplate,
         Paragraph,
+        SimpleDocTemplate,
         Spacer,
         Table,
         TableStyle,
     )
-    from reportlab.lib import colors
 
     temp_file = tempfile.NamedTemporaryFile(delete=False, suffix=".pdf")
     doc = SimpleDocTemplate(temp_file.name, pagesize=A4)

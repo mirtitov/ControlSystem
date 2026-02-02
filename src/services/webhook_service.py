@@ -1,8 +1,9 @@
-import hmac
 import hashlib
-import httpx
-from typing import Dict, Any, Optional
+import hmac
 from datetime import datetime
+from typing import Any
+
+import httpx
 
 
 class WebhookService:
@@ -16,8 +17,8 @@ class WebhookService:
         ).hexdigest()
 
     async def send_webhook(
-        self, url: str, payload: Dict[str, Any], secret_key: str, timeout: int = 10
-    ) -> tuple[bool, Optional[int], Optional[str], Optional[str]]:
+        self, url: str, payload: dict[str, Any], secret_key: str, timeout: int = 10
+    ) -> tuple[bool, int | None, str | None, str | None]:
         """
         Send webhook to URL.
 
@@ -56,9 +57,7 @@ class WebhookService:
         except Exception as e:
             return (False, None, None, f"Unexpected error: {str(e)}")
 
-    def create_webhook_payload(
-        self, event_type: str, data: Dict[str, Any]
-    ) -> Dict[str, Any]:
+    def create_webhook_payload(self, event_type: str, data: dict[str, Any]) -> dict[str, Any]:
         """Create standardized webhook payload"""
         return {
             "event": event_type,

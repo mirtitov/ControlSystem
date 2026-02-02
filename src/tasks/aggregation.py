@@ -1,14 +1,14 @@
 from celery import Task
-from typing import Optional, List
+
 from src.celery_app import celery_app
 from src.database import AsyncSessionLocal
-from src.repositories.product import ProductRepository
 from src.repositories.batch import BatchRepository
+from src.repositories.product import ProductRepository
 
 
 @celery_app.task(bind=True, max_retries=3)
 def aggregate_products_batch(
-    self: Task, batch_id: int, unique_codes: List[str], user_id: Optional[int] = None
+    self: Task, batch_id: int, unique_codes: list[str], user_id: int | None = None
 ) -> dict:
     """
     Асинхронная массовая аггрегация продукции.
@@ -46,8 +46,8 @@ def aggregate_products_batch(
                 await session.commit()
 
                 # Send webhook events for aggregated products
-                from src.services.webhook_service import webhook_service
                 from src.repositories.webhook import WebhookRepository
+                from src.services.webhook_service import webhook_service
                 from src.tasks.webhooks import send_webhook_delivery
 
                 webhook_repo = WebhookRepository(session)

@@ -1,8 +1,10 @@
-from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select, func, and_
-from sqlalchemy.orm import selectinload
-from typing import Optional, List
+import builtins
 from datetime import date, datetime
+
+from sqlalchemy import and_, func, select
+from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import selectinload
+
 from src.models.batch import Batch
 from src.schemas.batch import BatchCreate, BatchUpdate
 
@@ -18,9 +20,7 @@ class BatchRepository:
         await self.session.refresh(batch)
         return batch
 
-    async def get_by_id(
-        self, batch_id: int, with_products: bool = False
-    ) -> Batch | None:
+    async def get_by_id(self, batch_id: int, with_products: bool = False) -> Batch | None:
         query = select(Batch).where(Batch.id == batch_id)
         if with_products:
             query = query.options(selectinload(Batch.products))
@@ -50,14 +50,14 @@ class BatchRepository:
 
     async def list(
         self,
-        is_closed: Optional[bool] = None,
-        batch_number: Optional[int] = None,
-        batch_date: Optional[date] = None,
-        work_center_id: Optional[int] = None,
-        shift: Optional[str] = None,
+        is_closed: bool | None = None,
+        batch_number: int | None = None,
+        batch_date: date | None = None,
+        work_center_id: int | None = None,
+        shift: str | None = None,
         offset: int = 0,
         limit: int = 20,
-    ) -> tuple[List[Batch], int]:
+    ) -> tuple[list[Batch], int]:
         query = select(Batch)
         count_query = select(func.count(Batch.id))
 
@@ -91,10 +91,8 @@ class BatchRepository:
 
         return list(items), total
 
-    async def get_expired_batches(self) -> List[Batch]:
+    async def get_expired_batches(self) -> builtins.list[Batch]:
         """Get batches where shift_end < now() and is_closed = False"""
-        query = select(Batch).where(
-            and_(not Batch.is_closed, Batch.shift_end < datetime.utcnow())
-        )
+        query = select(Batch).where(and_(not Batch.is_closed, Batch.shift_end < datetime.utcnow()))
         result = await self.session.execute(query)
         return list(result.scalars().all())

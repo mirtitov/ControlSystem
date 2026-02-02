@@ -1,12 +1,14 @@
+import os
+import tempfile
+
 from celery import Task
+
 from src.celery_app import celery_app
 from src.database import AsyncSessionLocal
 from src.repositories.batch import BatchRepository
 from src.repositories.work_center import WorkCenterRepository
-from src.services.minio_service import minio_service
 from src.schemas.batch import BatchCreate
-import tempfile
-import os
+from src.services.minio_service import minio_service
 
 
 @celery_app.task(bind=True, max_retries=1)
@@ -28,6 +30,7 @@ def import_batches_from_file(self: Task, file_url: str, user_id: int) -> dict:
         }
     """
     import asyncio
+
     import pandas as pd
 
     async def _import():
@@ -39,19 +42,17 @@ def import_batches_from_file(self: Task, file_url: str, user_id: int) -> dict:
                 # 1. MinIO URL: "http://minio:9000/bucket/object.xlsx"
                 # 2. Object path: "bucket/object.xlsx"
                 # 3. Just object name: "file.xlsx" (assumes imports bucket)
-                
+
                 # Try to parse as URL
                 from urllib.parse import urlparse
-                
+
                 parsed_url = urlparse(file_url)
 
                 if parsed_url.scheme in ["http", "https"]:
                     # Full URL - extract bucket and object
                     path_parts = parsed_url.path.lstrip("/").split("/", 1)
                     bucket_name = path_parts[0] if len(path_parts) > 0 else "imports"
-                    object_name = (
-                        path_parts[1] if len(path_parts) > 1 else path_parts[0]
-                    )
+                    object_name = path_parts[1] if len(path_parts) > 1 else path_parts[0]
                 elif "/" in file_url:
                     # Path format: "bucket/object.xlsx"
                     bucket_name, object_name = file_url.split("/", 1)
@@ -98,9 +99,7 @@ def import_batches_from_file(self: Task, file_url: str, user_id: int) -> dict:
                             nomenclature=row.get("Номенклатура", ""),
                             ekn_code=row.get("КодЕКН", ""),
                             shift_start=pd.to_datetime(row.get("ДатаВремяНачалаСмены")),
-                            shift_end=pd.to_datetime(
-                                row.get("ДатаВремяОкончанияСмены")
-                            ),
+                            shift_end=pd.to_datetime(row.get("ДатаВремяОкончанияСмены")),
                         )
 
                         await batch_repo.create(batch_data)
@@ -130,8 +129,8 @@ def import_batches_from_file(self: Task, file_url: str, user_id: int) -> dict:
                     pass
 
                 # Send webhook event
-                from src.services.webhook_service import webhook_service
                 from src.repositories.webhook import WebhookRepository
+                from src.services.webhook_service import webhook_service
                 from src.tasks.webhooks import send_webhook_delivery
 
                 webhook_repo = WebhookRepository(session)
@@ -193,6 +192,7 @@ def export_batches_to_file(filters: dict, format: str = "excel") -> dict:
         }
     """
     import asyncio
+
     import pandas as pd
 
     async def _export():
@@ -216,9 +216,7 @@ def export_batches_to_file(filters: dict, format: str = "excel") -> dict:
                         "НомерПартии": batch.batch_number,
                         "ДатаПартии": str(batch.batch_date),
                         "Статус": "Закрыта" if batch.is_closed else "Открыта",
-                        "РабочийЦентр": batch.work_center.name
-                        if batch.work_center
-                        else "",
+                        "РабочийЦентр": batch.work_center.name if batch.work_center else "",
                         "Смена": batch.shift,
                         "Бригада": batch.team,
                         "Номенклатура": batch.nomenclature,
@@ -240,9 +238,7 @@ def export_batches_to_file(filters: dict, format: str = "excel") -> dict:
             # Upload to MinIO
             from datetime import datetime
 
-            file_name = (
-                f"batches_export_{datetime.utcnow().strftime('%Y%m%d_%H%M%S')}.{format}"
-            )
+            file_name = f"batches_export_{datetime.utcnow().strftime('%Y%m%d_%H%M%S')}.{format}"
             file_url = minio_service.upload_file(
                 bucket="exports",
                 file_path=temp_file.name,

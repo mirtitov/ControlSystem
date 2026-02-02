@@ -1,36 +1,35 @@
+from datetime import date, datetime
+
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.ext.asyncio import AsyncSession
-from typing import Optional, List
-from datetime import date, datetime
+
 from src.database import get_db
 from src.repositories.batch import BatchRepository
-from src.repositories.work_center import WorkCenterRepository
 from src.repositories.product import ProductRepository
-from src.schemas.batch import (
-    BatchCreateRequest,
-    BatchCreate,
-    BatchUpdate,
-    BatchResponse,
-    BatchListResponse,
-)
-from src.schemas.aggregation import AggregateRequest, AggregateAsyncRequest
-from src.schemas.reports import GenerateReportRequest
-from src.schemas.export import ExportRequest
-from src.services.cache_service import cache_service
-from src.tasks.aggregation import aggregate_products_batch
-from src.tasks.reports import generate_batch_report
-from src.tasks.import_export import import_batches_from_file, export_batches_to_file
-from src.tasks.webhooks import send_webhook_delivery
-from src.services.webhook_service import webhook_service
 from src.repositories.webhook import WebhookRepository
+from src.repositories.work_center import WorkCenterRepository
+from src.schemas.aggregation import AggregateAsyncRequest, AggregateRequest
+from src.schemas.batch import (
+    BatchCreate,
+    BatchCreateRequest,
+    BatchListResponse,
+    BatchResponse,
+    BatchUpdate,
+)
+from src.schemas.export import ExportRequest
+from src.schemas.reports import GenerateReportRequest
+from src.services.cache_service import cache_service
+from src.services.webhook_service import webhook_service
+from src.tasks.aggregation import aggregate_products_batch
+from src.tasks.import_export import export_batches_to_file, import_batches_from_file
+from src.tasks.reports import generate_batch_report
+from src.tasks.webhooks import send_webhook_delivery
 
 router = APIRouter(prefix="/api/v1/batches", tags=["batches"])
 
 
-@router.post("", response_model=List[BatchResponse], status_code=201)
-async def create_batches(
-    requests: List[BatchCreateRequest], db: AsyncSession = Depends(get_db)
-):
+@router.post("", response_model=list[BatchResponse], status_code=201)
+async def create_batches(requests: list[BatchCreateRequest], db: AsyncSession = Depends(get_db)):
     """Создание сменных заданий"""
     batch_repo = BatchRepository(db)
     work_center_repo = WorkCenterRepository(db)
@@ -71,9 +70,7 @@ async def create_batches(
     # Send webhook events
     webhook_repo = WebhookRepository(db)
     for batch in created_batches:
-        subscriptions = await webhook_repo.get_active_subscriptions_for_event(
-            "batch_created"
-        )
+        subscriptions = await webhook_repo.get_active_subscriptions_for_event("batch_created")
         for subscription in subscriptions:
             payload = webhook_service.create_webhook_payload(
                 "batch_created",
@@ -111,9 +108,7 @@ async def get_batch(batch_id: int, db: AsyncSession = Depends(get_db)):
 
 
 @router.patch("/{batch_id}", response_model=BatchResponse)
-async def update_batch(
-    batch_id: int, data: BatchUpdate, db: AsyncSession = Depends(get_db)
-):
+async def update_batch(batch_id: int, data: BatchUpdate, db: AsyncSession = Depends(get_db)):
     """Обновление партии"""
     batch_repo = BatchRepository(db)
     batch = await batch_repo.update(batch_id, data)
@@ -131,9 +126,7 @@ async def update_batch(
 
     # Send webhook event
     webhook_repo = WebhookRepository(db)
-    subscriptions = await webhook_repo.get_active_subscriptions_for_event(
-        "batch_updated"
-    )
+    subscriptions = await webhook_repo.get_active_subscriptions_for_event("batch_updated")
     for subscription in subscriptions:
         payload = webhook_service.create_webhook_payload(
             "batch_updated",
@@ -150,9 +143,7 @@ async def update_batch(
 
     # Check if batch was closed
     if data.is_closed and batch.is_closed:
-        subscriptions = await webhook_repo.get_active_subscriptions_for_event(
-            "batch_closed"
-        )
+        subscriptions = await webhook_repo.get_active_subscriptions_for_event("batch_closed")
         for subscription in subscriptions:
             product_repo = ProductRepository(db)
             stats = await product_repo.get_statistics(batch_id)
@@ -161,9 +152,7 @@ async def update_batch(
                 {
                     "id": batch.id,
                     "batch_number": batch.batch_number,
-                    "closed_at": batch.closed_at.isoformat()
-                    if batch.closed_at
-                    else None,
+                    "closed_at": batch.closed_at.isoformat() if batch.closed_at else None,
                     "statistics": stats,
                 },
             )
@@ -179,11 +168,11 @@ async def update_batch(
 
 @router.get("", response_model=BatchListResponse)
 async def list_batches(
-    is_closed: Optional[bool] = Query(None),
-    batch_number: Optional[int] = Query(None),
-    batch_date: Optional[date] = Query(None),
-    work_center_id: Optional[int] = Query(None),
-    shift: Optional[str] = Query(None),
+    is_closed: bool | None = Query(None),
+    batch_number: int | None = Query(None),
+    batch_date: date | None = Query(None),
+    work_center_id: int | None = Query(None),
+    shift: str | None = Query(None),
     offset: int = Query(0, ge=0),
     limit: int = Query(20, ge=1, le=100),
     db: AsyncSession = Depends(get_db),
@@ -238,9 +227,7 @@ async def aggregate_batch(
 
     # Send webhook events for aggregated products
     webhook_repo = WebhookRepository(db)
-    subscriptions = await webhook_repo.get_active_subscriptions_for_event(
-        "product_aggregated"
-    )
+    subscriptions = await webhook_repo.get_active_subscriptions_for_event("product_aggregated")
 
     # Get batch info for webhook
     batch_repo = BatchRepository(db)

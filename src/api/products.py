@@ -1,8 +1,9 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.ext.asyncio import AsyncSession
+
 from src.database import get_db
-from src.repositories.product import ProductRepository
 from src.repositories.batch import BatchRepository
+from src.repositories.product import ProductRepository
 from src.schemas.product import ProductCreate, ProductResponse
 from src.services.cache_service import cache_service
 
@@ -22,9 +23,7 @@ async def create_product(data: ProductCreate, db: AsyncSession = Depends(get_db)
     product_repo = ProductRepository(db)
     existing = await product_repo.get_by_code(data.unique_code)
     if existing:
-        raise HTTPException(
-            status_code=400, detail="Product with this code already exists"
-        )
+        raise HTTPException(status_code=400, detail="Product with this code already exists")
 
     product = await product_repo.create(data)
     await db.commit()

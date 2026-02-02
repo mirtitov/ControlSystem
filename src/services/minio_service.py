@@ -1,9 +1,10 @@
 import os
 from datetime import timedelta
+
 from minio import Minio
 from minio.error import S3Error
+
 from src.config import settings
-from typing import Optional
 
 
 class MinIOService:
@@ -30,7 +31,7 @@ class MinIOService:
         self,
         bucket: str,
         file_path: str,
-        object_name: Optional[str] = None,
+        object_name: str | None = None,
         expires_days: int = 7,
     ) -> str:
         """
@@ -73,7 +74,7 @@ class MinIOService:
         bucket: str,
         data: bytes,
         object_name: str,
-        content_type: Optional[str] = None,
+        content_type: str | None = None,
         expires_days: int = 7,
     ) -> str:
         """
@@ -141,12 +142,10 @@ class MinIOService:
         except S3Error as e:
             raise Exception(f"Failed to delete file from MinIO: {e}")
 
-    def list_files(self, bucket: str, prefix: Optional[str] = None):
+    def list_files(self, bucket: str, prefix: str | None = None):
         """List files in bucket"""
         try:
-            objects = self.client.list_objects(
-                bucket_name=bucket, prefix=prefix, recursive=True
-            )
+            objects = self.client.list_objects(bucket_name=bucket, prefix=prefix, recursive=True)
             return list(objects)
         except S3Error as e:
             raise Exception(f"Failed to list files from MinIO: {e}")

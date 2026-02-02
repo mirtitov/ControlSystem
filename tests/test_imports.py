@@ -2,8 +2,8 @@
 Тесты для проверки импортов всех модулей
 """
 
-import sys
 import os
+import sys
 
 # Добавляем корневую директорию в путь
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
@@ -21,11 +21,11 @@ def test_config_import():
 def test_models_import():
     """Тест импорта моделей"""
     from src.models import (
-        WorkCenter,
         Batch,
         Product,
-        WebhookSubscription,
         WebhookDelivery,
+        WebhookSubscription,
+        WorkCenter,
     )
 
     assert WorkCenter is not None
@@ -48,10 +48,10 @@ def test_schemas_import():
 def test_repositories_import():
     """Тест импорта репозиториев"""
     from src.repositories import (
-        WorkCenterRepository,
         BatchRepository,
         ProductRepository,
         WebhookRepository,
+        WorkCenterRepository,
     )
 
     assert WorkCenterRepository is not None
@@ -64,7 +64,7 @@ def test_repositories_import():
 def test_services_import():
     """Тест импорта сервисов"""
     try:
-        from src.services import MinIOService, CacheService, WebhookService
+        from src.services import CacheService, MinIOService, WebhookService
 
         assert MinIOService is not None
         assert CacheService is not None
@@ -77,7 +77,7 @@ def test_services_import():
 def test_api_import():
     """Тест импорта API"""
     try:
-        from src.api import batches, products, tasks, webhooks, analytics
+        from src.api import analytics, batches, products, tasks, webhooks
 
         assert batches is not None
         assert products is not None

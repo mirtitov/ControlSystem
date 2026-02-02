@@ -2,16 +2,16 @@
 Тесты для моделей SQLAlchemy
 """
 
-import sys
 import os
-from datetime import datetime, date
+import sys
+from datetime import date, datetime
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from src.models.work_center import WorkCenter
 from src.models.batch import Batch
 from src.models.product import Product
-from src.models.webhook import WebhookSubscription, WebhookDelivery
+from src.models.webhook import WebhookDelivery, WebhookSubscription
+from src.models.work_center import WorkCenter
 
 
 def test_work_center_model():

@@ -1,10 +1,9 @@
 from pydantic import BaseModel
-from typing import List
 
 
 class AggregateRequest(BaseModel):
-    unique_codes: List[str]
+    unique_codes: list[str]
 
 
 class AggregateAsyncRequest(BaseModel):
-    unique_codes: List[str]
+    unique_codes: list[str]

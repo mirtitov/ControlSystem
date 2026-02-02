@@ -1,21 +1,19 @@
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.ext.asyncio import AsyncSession
-from typing import Optional
+
 from src.database import get_db
 from src.repositories.webhook import WebhookRepository
 from src.schemas.webhook import (
     WebhookSubscriptionCreate,
-    WebhookSubscriptionUpdate,
     WebhookSubscriptionResponse,
+    WebhookSubscriptionUpdate,
 )
 
 router = APIRouter(prefix="/api/v1/webhooks", tags=["webhooks"])
 
 
 @router.post("", response_model=WebhookSubscriptionResponse, status_code=201)
-async def create_webhook(
-    data: WebhookSubscriptionCreate, db: AsyncSession = Depends(get_db)
-):
+async def create_webhook(data: WebhookSubscriptionCreate, db: AsyncSession = Depends(get_db)):
     """Создание webhook подписки"""
     webhook_repo = WebhookRepository(db)
     subscription = await webhook_repo.create_subscription(data)
@@ -24,9 +22,7 @@ async def create_webhook(
 
 
 @router.get("", response_model=dict)
-async def list_webhooks(
-    is_active: Optional[bool] = Query(None), db: AsyncSession = Depends(get_db)
-):
+async def list_webhooks(is_active: bool | None = Query(None), db: AsyncSession = Depends(get_db)):
     """Список webhook подписок"""
     webhook_repo = WebhookRepository(db)
     subscriptions = await webhook_repo.list_subscriptions(is_active=is_active)
@@ -88,8 +84,6 @@ async def get_webhook_deliveries(
     if not subscription:
         raise HTTPException(status_code=404, detail="Webhook subscription not found")
 
-    deliveries = await webhook_repo.get_deliveries_by_subscription(
-        webhook_id, limit=limit
-    )
+    deliveries = await webhook_repo.get_deliveries_by_subscription(webhook_id, limit=limit)
 
     return {"items": deliveries, "total": len(deliveries)}

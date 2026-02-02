@@ -2,9 +2,9 @@
 Тесты для Pydantic схем
 """
 
-import sys
 import os
-from datetime import datetime, date
+import sys
+from datetime import date, datetime
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 

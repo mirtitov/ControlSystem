@@ -1,14 +1,15 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from src.api import batches, products, tasks, webhooks, analytics
-from src.database import engine, Base
+
+from src.api import analytics, batches, products, tasks, webhooks
+from src.database import Base, engine
 from src.services.cache_service import cache_service
 
 # Rate limiting (optional - can be enabled if needed)
 try:
     from slowapi import Limiter, _rate_limit_exceeded_handler
-    from slowapi.util import get_remote_address
     from slowapi.errors import RateLimitExceeded
+    from slowapi.util import get_remote_address
 
     RATE_LIMITING_AVAILABLE = True
 except ImportError:

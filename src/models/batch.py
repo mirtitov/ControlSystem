@@ -1,16 +1,17 @@
 from sqlalchemy import (
+    Boolean,
     Column,
+    Date,
+    DateTime,
+    ForeignKey,
+    Index,
     Integer,
     String,
-    Boolean,
-    DateTime,
-    Date,
-    ForeignKey,
     UniqueConstraint,
-    Index,
 )
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
+
 from src.database import Base
 
 
@@ -43,14 +44,10 @@ class Batch(Base):
 
     # Metadata
     created_at = Column(DateTime(timezone=True), server_default=func.now())
-    updated_at = Column(
-        DateTime(timezone=True), server_default=func.now(), onupdate=func.now()
-    )
+    updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
 
     # Relationships
-    products = relationship(
-        "Product", back_populates="batch", cascade="all, delete-orphan"
-    )
+    products = relationship("Product", back_populates="batch", cascade="all, delete-orphan")
     work_center = relationship("WorkCenter", backref="batches")
 
     __table_args__ = (

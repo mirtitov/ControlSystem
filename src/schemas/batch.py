@@ -1,6 +1,6 @@
+from datetime import date, datetime
+
 from pydantic import BaseModel
-from typing import Optional, List
-from datetime import datetime, date
 
 
 class BatchCreateRequest(BaseModel):
@@ -33,21 +33,21 @@ class BatchCreate(BaseModel):
 
 
 class BatchUpdate(BaseModel):
-    is_closed: Optional[bool] = None
-    task_description: Optional[str] = None
-    shift: Optional[str] = None
-    team: Optional[str] = None
-    nomenclature: Optional[str] = None
-    ekn_code: Optional[str] = None
-    shift_start: Optional[datetime] = None
-    shift_end: Optional[datetime] = None
+    is_closed: bool | None = None
+    task_description: str | None = None
+    shift: str | None = None
+    team: str | None = None
+    nomenclature: str | None = None
+    ekn_code: str | None = None
+    shift_start: datetime | None = None
+    shift_end: datetime | None = None
 
 
 class ProductShortResponse(BaseModel):
     id: int
     unique_code: str
     is_aggregated: bool
-    aggregated_at: Optional[datetime] = None
+    aggregated_at: datetime | None = None
 
     class Config:
         from_attributes = True
@@ -56,7 +56,7 @@ class ProductShortResponse(BaseModel):
 class BatchResponse(BaseModel):
     id: int
     is_closed: bool
-    closed_at: Optional[datetime] = None
+    closed_at: datetime | None = None
     task_description: str
     work_center_id: int
     shift: str
@@ -69,14 +69,14 @@ class BatchResponse(BaseModel):
     shift_end: datetime
     created_at: datetime
     updated_at: datetime
-    products: List[ProductShortResponse] = []
+    products: list[ProductShortResponse] = []
 
     class Config:
         from_attributes = True
 
 
 class BatchListResponse(BaseModel):
-    items: List[BatchResponse]
+    items: list[BatchResponse]
     total: int
     offset: int
     limit: int

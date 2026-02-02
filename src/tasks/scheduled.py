@@ -1,9 +1,10 @@
 from datetime import datetime
+
 from src.celery_app import celery_app
 from src.database import AsyncSessionLocal
 from src.repositories.batch import BatchRepository
-from src.services.minio_service import minio_service
 from src.services.cache_service import cache_service
+from src.services.minio_service import minio_service
 from src.tasks.webhooks import send_webhook_delivery
 
 
@@ -71,7 +72,8 @@ def update_cached_statistics():
 
     async def _update():
         async with AsyncSessionLocal() as session:
-            from sqlalchemy import select, func
+            from sqlalchemy import func, select
+
             from src.models.batch import Batch
             from src.models.product import Product
 
@@ -84,9 +86,7 @@ def update_cached_statistics():
             )
             active_batches = active_batches_result.scalar() or 0
 
-            total_products_result = await session.execute(
-                select(func.count(Product.id))
-            )
+            total_products_result = await session.execute(select(func.count(Product.id)))
             total_products = total_products_result.scalar() or 0
 
             aggregated_products_result = await session.execute(

@@ -1,6 +1,7 @@
-from sqlalchemy import Column, Integer, String, Boolean, DateTime, ForeignKey, Index
+from sqlalchemy import Boolean, Column, DateTime, ForeignKey, Index, Integer, String
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
+
 from src.database import Base
 
 
@@ -21,6 +22,4 @@ class Product(Base):
     # Relationships
     batch = relationship("Batch", back_populates="products")
 
-    __table_args__ = (
-        Index("idx_product_batch_aggregated", "batch_id", "is_aggregated"),
-    )
+    __table_args__ = (Index("idx_product_batch_aggregated", "batch_id", "is_aggregated"),)

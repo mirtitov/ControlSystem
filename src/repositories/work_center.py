@@ -1,5 +1,6 @@
-from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
+
 from src.models.work_center import WorkCenter
 
 

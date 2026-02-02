@@ -1,7 +1,8 @@
-from sqlalchemy import Column, Integer, String, Boolean, DateTime, ForeignKey, JSON
+from sqlalchemy import JSON, Boolean, Column, DateTime, ForeignKey, Integer, String
+from sqlalchemy.dialects.postgresql import ARRAY as PG_ARRAY
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
-from sqlalchemy.dialects.postgresql import ARRAY as PG_ARRAY
+
 from src.database import Base
 
 
@@ -17,9 +18,7 @@ class WebhookSubscription(Base):
     timeout = Column(Integer, default=10, nullable=False)
 
     created_at = Column(DateTime(timezone=True), server_default=func.now())
-    updated_at = Column(
-        DateTime(timezone=True), server_default=func.now(), onupdate=func.now()
-    )
+    updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
 
     # Relationships
     deliveries = relationship(
@@ -31,9 +30,7 @@ class WebhookDelivery(Base):
     __tablename__ = "webhook_deliveries"
 
     id = Column(Integer, primary_key=True, index=True)
-    subscription_id = Column(
-        Integer, ForeignKey("webhook_subscriptions.id"), nullable=False
-    )
+    subscription_id = Column(Integer, ForeignKey("webhook_subscriptions.id"), nullable=False)
     event_type = Column(String, nullable=False)
     payload = Column(JSON, nullable=False)
 

@@ -1,14 +1,16 @@
 import json
-import redis.asyncio as redis
-from typing import Optional, Any
-from src.config import settings
+from datetime import date, datetime
 from functools import wraps
-from datetime import datetime, date
+from typing import Any
+
+import redis.asyncio as redis
+
+from src.config import settings
 
 
 class CacheService:
     def __init__(self):
-        self.redis_client: Optional[redis.Redis] = None
+        self.redis_client: redis.Redis | None = None
 
     async def connect(self):
         """Connect to Redis"""
@@ -23,7 +25,7 @@ class CacheService:
             await self.redis_client.close()
             self.redis_client = None
 
-    async def get(self, key: str) -> Optional[Any]:
+    async def get(self, key: str) -> Any | None:
         """Get value from cache"""
         if not self.redis_client:
             await self.connect()
@@ -101,9 +103,7 @@ def cached(ttl: int = 300, key_prefix: str = ""):
             if args:
                 cache_key += f":{':'.join(str(arg) for arg in args)}"
             if kwargs:
-                cache_key += (
-                    f":{':'.join(f'{k}={v}' for k, v in sorted(kwargs.items()))}"
-                )
+                cache_key += f":{':'.join(f'{k}={v}' for k, v in sorted(kwargs.items()))}"
 
             # Try to get from cache
             cached_value = await cache_service.get(cache_key)
