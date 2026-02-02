@@ -1,7 +1,7 @@
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, func, and_, or_
 from sqlalchemy.orm import selectinload
-from typing import Optional
+from typing import Optional, List
 from datetime import date, datetime
 from src.models.batch import Batch
 from src.schemas.batch import BatchCreate, BatchUpdate
@@ -55,7 +55,7 @@ class BatchRepository:
         shift: Optional[str] = None,
         offset: int = 0,
         limit: int = 20,
-    ) -> tuple[list[Batch], int]:
+    ) -> tuple[List[Batch], int]:
         query = select(Batch)
         count_query = select(func.count(Batch.id))
         
@@ -89,7 +89,7 @@ class BatchRepository:
         
         return list(items), total
 
-    async def get_expired_batches(self) -> list[Batch]:
+    async def get_expired_batches(self) -> List[Batch]:
         """Get batches where shift_end < now() and is_closed = False"""
         query = select(Batch).where(
             and_(

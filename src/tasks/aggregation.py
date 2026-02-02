@@ -1,5 +1,5 @@
 from celery import Task
-from typing import Optional
+from typing import Optional, List
 from src.celery_app import celery_app
 from src.database import AsyncSessionLocal
 from src.repositories.product import ProductRepository
@@ -10,7 +10,7 @@ from src.repositories.batch import BatchRepository
 def aggregate_products_batch(
     self: Task,
     batch_id: int,
-    unique_codes: list[str],
+    unique_codes: List[str],
     user_id: Optional[int] = None
 ) -> dict:
     """
