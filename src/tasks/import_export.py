@@ -39,19 +39,35 @@ def import_batches_from_file(
         async with AsyncSessionLocal() as session:
             await session.begin()
             try:
-                # Download file from MinIO
-                # Extract bucket and object_name from URL
-                # For simplicity, assume file_url contains bucket/object_name
-                # In production, parse the URL properly
+                # Parse MinIO URL or file path
+                # file_url can be:
+                # 1. MinIO URL: "http://minio:9000/bucket/object.xlsx"
+                # 2. Object path: "bucket/object.xlsx"
+                # 3. Just object name: "file.xlsx" (assumes imports bucket)
+                
+                # Try to parse as URL
+                parsed_url = urlparse(file_url)
+                
+                if parsed_url.scheme in ['http', 'https']:
+                    # Full URL - extract bucket and object
+                    path_parts = parsed_url.path.lstrip('/').split('/', 1)
+                    bucket_name = path_parts[0] if len(path_parts) > 0 else "imports"
+                    object_name = path_parts[1] if len(path_parts) > 1 else path_parts[0]
+                elif '/' in file_url:
+                    # Path format: "bucket/object.xlsx"
+                    bucket_name, object_name = file_url.split('/', 1)
+                else:
+                    # Just filename - use imports bucket
+                    bucket_name = "imports"
+                    object_name = file_url
                 
                 # Create temp file
                 temp_file = tempfile.NamedTemporaryFile(delete=False, suffix=".xlsx")
                 temp_file.close()
                 
-                # Download (simplified - in production parse URL properly)
-                # minio_service.download_file("imports", object_name, temp_file.name)
+                # Download from MinIO
+                minio_service.download_file(bucket_name, object_name, temp_file.name)
                 
-                # For now, assume file is already downloaded
                 # Read Excel file
                 df = pd.read_excel(temp_file.name)
                 
@@ -108,7 +124,35 @@ def import_batches_from_file(
                         })
                 
                 await session.commit()
-                os.remove(temp_file.name)
+                
+                # Cleanup temp file
+                try:
+                    os.remove(temp_file.name)
+                except:
+                    pass
+                
+                # Send webhook event
+                from src.services.webhook_service import webhook_service
+                from src.repositories.webhook import WebhookRepository
+                from src.tasks.webhooks import send_webhook_delivery
+                
+                webhook_repo = WebhookRepository(session)
+                subscriptions = await webhook_repo.get_active_subscriptions_for_event("import_completed")
+                
+                for subscription in subscriptions:
+                    payload = webhook_service.create_webhook_payload("import_completed", {
+                        "total_rows": total_rows,
+                        "created": created,
+                        "skipped": skipped,
+                        "errors": errors,
+                        "user_id": user_id
+                    })
+                    delivery = await webhook_repo.create_delivery(
+                        subscription_id=subscription.id,
+                        event_type="import_completed",
+                        payload=payload
+                    )
+                    send_webhook_delivery.delay(delivery.id)
                 
                 return {
                     "success": True,

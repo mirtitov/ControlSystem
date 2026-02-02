@@ -51,6 +51,33 @@ def aggregate_products_batch(
                 
                 await session.commit()
                 
+                # Send webhook events for aggregated products
+                from src.services.webhook_service import webhook_service
+                from src.repositories.webhook import WebhookRepository
+                from src.tasks.webhooks import send_webhook_delivery
+                
+                webhook_repo = WebhookRepository(session)
+                subscriptions = await webhook_repo.get_active_subscriptions_for_event("product_aggregated")
+                
+                # Get aggregated product codes
+                aggregated_codes = [code for code in unique_codes if code not in [e.get("code") for e in result.get("errors", [])]]
+                
+                for subscription in subscriptions:
+                    # Send event for batch aggregation completion
+                    payload = webhook_service.create_webhook_payload("product_aggregated", {
+                        "batch_id": batch_id,
+                        "batch_number": batch.batch_number,
+                        "total": result["total"],
+                        "aggregated": result["aggregated"],
+                        "failed": result["failed"]
+                    })
+                    delivery = await webhook_repo.create_delivery(
+                        subscription_id=subscription.id,
+                        event_type="product_aggregated",
+                        payload=payload
+                    )
+                    send_webhook_delivery.delay(delivery.id)
+                
                 # Update progress
                 self.update_state(
                     state="PROGRESS",

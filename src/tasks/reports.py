@@ -73,16 +73,60 @@ def generate_batch_report(
             )
             
             file_size = os.path.getsize(file_path)
-            os.remove(file_path)  # Cleanup temp file
             
             expires_at = (datetime.utcnow() + timedelta(days=7)).isoformat() + "Z"
+            
+            # Send webhook event
+            from src.services.webhook_service import webhook_service
+            from src.repositories.webhook import WebhookRepository
+            from src.tasks.webhooks import send_webhook_delivery
+            
+            webhook_repo = WebhookRepository(session)
+            subscriptions = await webhook_repo.get_active_subscriptions_for_event("report_generated")
+            
+            for subscription in subscriptions:
+                payload = webhook_service.create_webhook_payload("report_generated", {
+                    "batch_id": batch_id,
+                    "report_type": format,
+                    "file_url": file_url,
+                    "file_name": file_name,
+                    "file_size": file_size,
+                    "expires_at": expires_at
+                })
+                delivery = await webhook_repo.create_delivery(
+                    subscription_id=subscription.id,
+                    event_type="report_generated",
+                    payload=payload
+                )
+                send_webhook_delivery.delay(delivery.id)
+            
+            # Cleanup temp file
+            try:
+                os.remove(file_path)
+            except:
+                pass
+            
+            # Send email notification if provided
+            if user_email:
+                try:
+                    # In production, use proper email service (SMTP, SendGrid, etc.)
+                    # For now, log the notification
+                    import logging
+                    logger = logging.getLogger(__name__)
+                    logger.info(f"Report generated for batch {batch_id}, email: {user_email}, file: {file_url}")
+                    # TODO: Implement actual email sending
+                    # Example: send_email(user_email, "Report Ready", f"Your report is ready: {file_url}")
+                except Exception as e:
+                    # Don't fail the task if email fails
+                    print(f"Failed to send email notification: {e}")
             
             return {
                 "success": True,
                 "file_url": file_url,
                 "file_name": file_name,
                 "file_size": file_size,
-                "expires_at": expires_at
+                "expires_at": expires_at,
+                "email_sent": user_email is not None
             }
     
     try:

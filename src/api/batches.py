@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException, Query, BackgroundTasks
 from sqlalchemy.ext.asyncio import AsyncSession
 from typing import Optional, List
-from datetime import date
+from datetime import date, datetime
 from src.database import get_db
 from src.repositories.batch import BatchRepository
 from src.repositories.work_center import WorkCenterRepository
@@ -104,6 +104,9 @@ async def get_batch(
     
     if not batch:
         raise HTTPException(status_code=404, detail="Batch not found")
+    
+    # Явно загружаем products чтобы избежать lazy loading проблем
+    await db.refresh(batch, ["products"])
     
     return batch
 
@@ -232,6 +235,31 @@ async def aggregate_batch(
     await cache_service.delete(f"batch_detail:{batch_id}")
     await cache_service.delete(f"batch_statistics:{batch_id}")
     await cache_service.delete("dashboard_stats")
+    
+    # Send webhook events for aggregated products
+    webhook_repo = WebhookRepository(db)
+    subscriptions = await webhook_repo.get_active_subscriptions_for_event("product_aggregated")
+    
+    # Get batch info for webhook
+    batch = await batch_repo.get_by_id(batch_id)
+    
+    if subscriptions and result.get("aggregated", 0) > 0:
+        for subscription in subscriptions:
+            # Send summary event for batch aggregation
+            payload = webhook_service.create_webhook_payload("product_aggregated", {
+                "batch_id": batch_id,
+                "batch_number": batch.batch_number if batch else None,
+                "total": result.get("total", 0),
+                "aggregated": result.get("aggregated", 0),
+                "failed": result.get("failed", 0),
+                "aggregated_at": datetime.utcnow().isoformat() + "Z"
+            })
+            delivery = await webhook_repo.create_delivery(
+                subscription_id=subscription.id,
+                event_type="product_aggregated",
+                payload=payload
+            )
+            send_webhook_delivery.delay(delivery.id)
     
     return result
 
