@@ -103,4 +103,4 @@ def aggregate_products_batch(
         return result
     except Exception as exc:
         # Retry with exponential backoff
-        raise self.retry(exc=exc, countdown=2**self.request.retries)
+        raise self.retry(exc=exc, countdown=2**self.request.retries) from None

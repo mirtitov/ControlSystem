@@ -84,4 +84,4 @@ def send_webhook_delivery(self: Task, delivery_id: int):
 
         return result
     except Exception as exc:
-        raise self.retry(exc=exc, countdown=2**self.request.retries)
+        raise self.retry(exc=exc, countdown=2**self.request.retries) from None

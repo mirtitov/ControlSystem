@@ -135,7 +135,7 @@ def generate_batch_report(
         result = asyncio.run(_generate())
         return result
     except Exception as exc:
-        raise self.retry(exc=exc, countdown=2**self.request.retries)
+        raise self.retry(exc=exc, countdown=2**self.request.retries) from None
 
 
 def _generate_excel_report(batch, stats) -> str:

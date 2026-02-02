@@ -172,7 +172,7 @@ def import_batches_from_file(self: Task, file_url: str, user_id: int) -> dict:
         result = asyncio.run(_import())
         return result
     except Exception as exc:
-        raise self.retry(exc=exc, countdown=2**self.request.retries)
+        raise self.retry(exc=exc, countdown=2**self.request.retries) from None
 
 
 @celery_app.task
