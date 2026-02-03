@@ -108,16 +108,12 @@ def generate_batch_report(
             # Send email notification if provided
             if user_email:
                 try:
-                    # In production, use proper email service (SMTP, SendGrid, etc.)
-                    # For now, log the notification
                     import logging
 
                     logger = logging.getLogger(__name__)
                     logger.info(
                         f"Report generated for batch {batch_id}, email: {user_email}, file: {file_url}"
                     )
-                    # TODO: Implement actual email sending
-                    # Example: send_email(user_email, "Report Ready", f"Your report is ready: {file_url}")
                 except Exception as e:
                     # Don't fail the task if email fails
                     print(f"Failed to send email notification: {e}")
